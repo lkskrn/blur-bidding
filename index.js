@@ -6,7 +6,11 @@ import consoleStamp from "console-stamp";
 
 consoleStamp(console, "yyyy/mm/dd HH:MM:ss.l");
 
-async function getChallenge() {
+async function getChallenge(walletAddress) {
+  const body = {
+    walletAddress,
+  };
+
   const response = await fetch("https://core-api.prod.blur.io/auth/challenge", {
     headers: {
       accept: "*/*",
@@ -22,7 +26,7 @@ async function getChallenge() {
       Referer: "https://blur.io/",
       "Referrer-Policy": "strict-origin-when-cross-origin",
     },
-    body: '{"walletAddress":"0x6A9eb75bf70857b3CC2CA5d53E75D1790a53E846"}',
+    body: JSON.stringify(body),
     method: "POST",
     credentials: "include",
   });
@@ -83,6 +87,35 @@ async function refreshCookies(cookies, authToken) {
   return response;
 }
 
+async function submitBid(cookies, signature, marketplaceData) {
+  const body = {
+    signature,
+    marketplaceData,
+  };
+  return await fetch(
+    "https://core-api.prod.blur.io/v1/collection-bids/submit",
+    {
+      headers: {
+        accept: "*/*",
+        "accept-language": "en-GB,en;q=0.9",
+        "content-type": "application/json",
+        "sec-ch-ua": '"Not?A_Brand";v="8", "Chromium";v="108", "Brave";v="108"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"macOS"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-site",
+        "sec-gpc": "1",
+        cookie: cookies,
+        Referer: "https://blur.io/",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+      },
+      body: JSON.stringify(body),
+      method: "POST",
+    }
+  );
+}
+
 async function placeBid(cookies, contractAddress) {
   const body = {
     price: {
@@ -130,7 +163,7 @@ async function blurBid(privateKey) {
   );
   const account = web3.eth.accounts.privateKeyToAccount(privateKey);
   console.log(account.address);
-  const challengeResponse = await getChallenge();
+  const challengeResponse = await getChallenge(account.address);
   const cookies = challengeResponse.headers.get("set-cookie");
   console.log("cookies:");
   console.log(cookies);
@@ -178,14 +211,24 @@ async function blurBid(privateKey) {
   // const placeBidResponseJson = await placeBidResponse.json();
   // console.log("placeBidResponseJson:");
   // console.log(placeBidResponseJson);
+  // const submitBidResponse = await submitBid(refreshedCookies);
+  // console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`); // 403 Forbidden
 }
 
-readline
-  .createInterface({
-    input: fs.createReadStream("private_keys.txt"),
-    output: process.stdout,
-    terminal: false,
-  })
-  .on("line", async (pk) => {
-    await blurBid(pk);
+async function readFile() {
+  const fileStream = fs.createReadStream("private_keys.txt");
+  const rl = readline.createInterface({
+    input: fileStream,
+    crlfDelay: Infinity,
   });
+
+  for await (const line of rl) {
+    console.log(
+      `processing line ${line.substring(0, 4)}********${line.substring(
+        line.length - 4
+      )}`
+    );
+    await blurBid(line);
+  }
+}
+readFile();
