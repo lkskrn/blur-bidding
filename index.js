@@ -123,7 +123,7 @@ async function placeBid(cookies, contractAddress) {
       amount: "0.01",
     },
     quantity: 1,
-    expirationTime: new Date(Date.now() + 30).toISOString(),
+    expirationTime: new Date(Date.now() + 1000000).toISOString(),
     contractAddress: contractAddress,
   };
   console.log("placeBid.body:");
@@ -157,6 +157,22 @@ async function placeBid(cookies, contractAddress) {
   );
 }
 
+function parseCookies(cookieHeader) {
+  const list = {};
+  if (!cookieHeader) return list;
+
+  cookieHeader.split(`;`).forEach(function (cookie) {
+    let [name, ...rest] = cookie.split(`=`);
+    name = name?.trim();
+    if (!name) return;
+    const value = rest.join(`=`).trim();
+    if (!value) return;
+    list[name] = decodeURIComponent(value);
+  });
+
+  return list;
+}
+
 async function blurBid(privateKey) {
   var web3 = new Web3(
     "wss://eth-mainnet.g.alchemy.com/v2/ujAP2FT6E7-oJWdWuSRaRNma4iXcdNhy"
@@ -167,14 +183,15 @@ async function blurBid(privateKey) {
   const cookies = challengeResponse.headers.get("set-cookie");
   console.log("cookies:");
   console.log(cookies);
+  const parsedCookies = parseCookies(cookies);
   const challenge = await challengeResponse.json();
-  console.log("challenge:");
+  console.log("/////// CHALLENGE ///////");
   console.log(challenge);
   const signature = await web3.eth.accounts.sign(
     challenge.message,
     account.privateKey
   );
-  console.log("signature:");
+  console.log("/////// SIGNATURE ///////");
   console.log(signature);
   const loginResponse = await login(
     account.address,
@@ -189,30 +206,59 @@ async function blurBid(privateKey) {
   console.log(authCookies);
   console.log(loginResponseJson);
   const accessToken = loginResponseJson.accessToken;
-  console.log(">>> accessToken <<<");
+  console.log("/////// ACCESS TOKEN ///////");
   console.log(accessToken);
 
   const refreshedCookiesResponse = await refreshCookies(cookies, accessToken);
   const refreshedCookiesJson = await refreshedCookiesResponse.json();
   const refreshedCookies = refreshedCookiesResponse.headers.get("set-cookie");
-  console.log("refreshedCookies:");
+  console.log("/////// REFRESH COOKIES ///////");
   console.log(refreshedCookies);
   console.log("refreshedCookiesJson:");
   console.log(refreshedCookiesJson);
 
+  const updatedCookies = `authToken=${accessToken}; ${cookies}`;
+
   const placeBidResponse = await placeBid(
-    refreshedCookies,
-    "0xd4e4078ca3495de5b1d4db434bebc5a986197782",
+    updatedCookies,
+    "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d", // Bored Apes
     accessToken
   );
-  console.log("placeBidResponse:");
-  console.log(`${placeBidResponse.status} ${placeBidResponse.statusText}`); // 403 Forbidden
-  // TODO
-  // const placeBidResponseJson = await placeBidResponse.json();
-  // console.log("placeBidResponseJson:");
-  // console.log(placeBidResponseJson);
-  // const submitBidResponse = await submitBid(refreshedCookies);
-  // console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`); // 403 Forbidden
+  console.log("/////// PLACE BID ///////");
+  console.log(`${placeBidResponse.status} ${placeBidResponse.statusText}`);
+  const placeBidResponseJson = await placeBidResponse.json();
+  console.log("placeBidResponseJson:");
+  console.log(placeBidResponseJson);
+  const marketplaceData = placeBidResponseJson.signatures[0].marketplaceData;
+  console.log("marketplaceData:");
+  console.log(marketplaceData);
+  const signData = placeBidResponseJson.signatures[0].signData;
+  console.log("signData:");
+  console.log(signData);
+  const v = signData.value;
+  const signBidMessage = `trader: ${v.trader}\nside: ${v.side}\nmatchingPolicy: ${v.matchingPolicy}\ncollection: ${v.collection}\ntokenId: ${v.tokenId}\namount: ${v.amount}\npaymentToken: ${v.paymentToken}\nprice: ${v.price}\nlistingTime: ${v.listingTime}\nexpirationTime: ${v.expirationTime}\nfees: ${v.fees}\nsalt: ${v.salt}\nextraParams: ${v.extraParams}\nnonce: ${v.nonce}\n`;
+  console.log("signBidMessage:");
+  console.log(signBidMessage);
+
+  console.log("/////// SIGN BID ///////");
+  const bidSignature = await web3.eth.accounts.sign(
+    signBidMessage,
+    account.privateKey
+  );
+
+  console.log("bidSignature:");
+  console.log(bidSignature);
+
+  console.log("/////// SUBMIT BID ///////");
+  const submitBidResponse = await submitBid(
+    updatedCookies,
+    bidSignature.signature,
+    marketplaceData
+  );
+  console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`);
+  const submitBidResponseJson = await submitBidResponse.json();
+  console.log("submitBidResponseJson:");
+  console.log(submitBidResponseJson);
 }
 
 async function readFile() {
