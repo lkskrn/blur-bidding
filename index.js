@@ -117,17 +117,17 @@ async function blurBid(privateKey) {
     "wss://eth-mainnet.g.alchemy.com/v2/ujAP2FT6E7-oJWdWuSRaRNma4iXcdNhy"
   );
   var wallet = new ethers.Wallet(privateKey, provider);
-  console.log("/////// ADDRESS ///////");
+  console.log("|||||||||| BID USING WALLET ||||||||||");
   console.log(wallet.address);
-  console.log("/////// CHALLENGE ///////");
+  console.log(">>> CHALLENGE <<<");
   const challengeResponse = await getChallenge(wallet.address);
   console.log(`${challengeResponse.status} ${challengeResponse.statusText}`);
   const cookies = challengeResponse.headers.get("set-cookie");
   const challenge = await challengeResponse.json();
-  console.log("/////// SIGN FOR LOGIN ///////");
+  console.log(">>> SIGN FOR LOGIN <<<");
   const signature = await wallet.signMessage(challenge.message);
   console.log(signature);
-  console.log("/////// LOGIN TO GET ACCESS TOKEN ///////");
+  console.log(">>> LOGIN TO GET ACCESS TOKEN <<<");
   const loginResponse = await login(
     wallet.address,
     challenge,
@@ -157,7 +157,7 @@ async function blurBid(privateKey) {
   };
   shuffleArray(nftContracts);
   for await (const contract of nftContracts) {
-    console.log(`/////// PLACE BID ${contract} ///////`);
+    console.log(`>>> PLACE BID ${contract} <<<`);
     const placeBidResponse = await placeBid(authCookies, contract, accessToken);
     console.log(`${placeBidResponse.status} ${placeBidResponse.statusText}`);
     const placeBidResponseJson = await placeBidResponse.json();
@@ -167,11 +167,11 @@ async function blurBid(privateKey) {
     const domain = signData.domain;
     const value = signData.value;
 
-    console.log("/////// SIGN FOR BID ///////");
+    console.log(">>> SIGN FOR BID <<<");
     const typedSignature = await wallet._signTypedData(domain, types, value);
     console.log(typedSignature);
 
-    console.log("/////// SUBMIT BID ///////");
+    console.log(">>> SUBMIT BID <<<");
     const submitBidResponse = await submitBid(
       authCookies,
       typedSignature,
@@ -180,8 +180,14 @@ async function blurBid(privateKey) {
     console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`);
     const submitBidResponseJson = await submitBidResponse.json();
     console.log(submitBidResponseJson);
+    await new Promise((r) => setTimeout(r, 1000));
   }
 }
+
+const sleep = (ms) =>
+  new Promise((r) => {
+    setTimeout(r, ms);
+  });
 
 async function readFile() {
   const fileStream = fs.createReadStream("private_keys.txt");
@@ -191,12 +197,9 @@ async function readFile() {
   });
 
   for await (const line of rl) {
-    console.log(
-      `processing line ${line.substring(0, 4)}********${line.substring(
-        line.length - 4
-      )}`
-    );
     await blurBid(line);
+    console.log("wait for the next run...");
+    await sleep(10000);
   }
 }
 readFile();
