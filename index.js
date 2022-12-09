@@ -7,26 +7,28 @@ import { ethers } from "ethers";
 
 consoleStamp(console, "yyyy/mm/dd HH:MM:ss.l");
 
+const defaultHeaders = {
+  accept: "*/*",
+  "accept-language": "en-GB,en;q=0.5",
+  "content-type": "application/json",
+  "sec-ch-ua": '"Not?A_Brand";v="8", "Chromium";v="108", "Brave";v="108"',
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": '"macOS"',
+  "sec-fetch-dest": "empty",
+  "sec-fetch-mode": "cors",
+  "sec-fetch-site": "same-site",
+  "sec-gpc": "1",
+  Referer: "https://blur.io/",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
 async function getChallenge(walletAddress) {
   const body = {
     walletAddress,
   };
 
   const response = await fetch("https://core-api.prod.blur.io/auth/challenge", {
-    headers: {
-      accept: "*/*",
-      "accept-language": "en-GB,en;q=0.5",
-      "content-type": "application/json",
-      "sec-ch-ua": '"Not?A_Brand";v="8", "Chromium";v="108", "Brave";v="108"',
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": '"macOS"',
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-site",
-      "sec-gpc": "1",
-      Referer: "https://blur.io/",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
-    },
+    headers: defaultHeaders,
     body: JSON.stringify(body),
     method: "POST",
     credentials: "include",
@@ -44,16 +46,7 @@ async function login(walletAddrers, challenge, messageHash, cookies) {
   };
   const response = await fetch("https://core-api.prod.blur.io/auth/login", {
     headers: {
-      accept: "*/*",
-      "accept-language": "en-GB,en;q=0.5",
-      "content-type": "application/json",
-      "sec-ch-ua": '"Not?A_Brand";v="8", "Chromium";v="108", "Brave";v="108"',
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": '"macOS"',
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-site",
-      "sec-gpc": "1",
+      ...defaultHeaders,
       cookie: cookies,
     },
     body: JSON.stringify(body),
@@ -67,19 +60,8 @@ async function login(walletAddrers, challenge, messageHash, cookies) {
 async function refreshCookies(cookies, authToken) {
   const response = await fetch("https://core-api.prod.blur.io/auth/cookie", {
     headers: {
-      accept: "*/*",
-      "accept-language": "en-GB,en;q=0.5",
-      "content-type": "application/json",
-      "sec-ch-ua": '"Not?A_Brand";v="8", "Chromium";v="108", "Brave";v="108"',
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": '"macOS"',
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-site",
-      "sec-gpc": "1",
+      ...defaultHeaders,
       cookie: cookies,
-      Referer: "https://blur.io/",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
     },
     body: `{"authToken":"${authToken}"}`,
     method: "POST",
@@ -97,19 +79,8 @@ async function submitBid(cookies, signature, marketplaceData) {
     "https://core-api.prod.blur.io/v1/collection-bids/submit",
     {
       headers: {
-        accept: "*/*",
-        "accept-language": "en-GB,en;q=0.9",
-        "content-type": "application/json",
-        "sec-ch-ua": '"Not?A_Brand";v="8", "Chromium";v="108", "Brave";v="108"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "sec-gpc": "1",
+        ...defaultHeaders,
         cookie: cookies,
-        Referer: "https://blur.io/",
-        "Referrer-Policy": "strict-origin-when-cross-origin",
       },
       body: JSON.stringify(body),
       method: "POST",
@@ -127,29 +98,18 @@ async function placeBid(cookies, contractAddress) {
     expirationTime: new Date(Date.now() + 1000000).toISOString(),
     contractAddress: contractAddress,
   };
-  console.log("placeBid.body:");
-  console.log(body);
+  // console.log("placeBid.body:");
+  // console.log(body);
 
-  console.log("placeBid.cookies:");
-  console.log(cookies);
+  // console.log("placeBid.cookies:");
+  // console.log(cookies);
 
   return await fetch(
     "https://core-api.prod.blur.io/v1/collection-bids/format",
     {
       headers: {
-        accept: "*/*",
-        "accept-language": "en-GB,en;q=0.8",
-        "content-type": "application/json",
-        "sec-ch-ua": '"Not?A_Brand";v="8", "Chromium";v="108", "Brave";v="108"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "sec-gpc": "1",
+        ...defaultHeaders,
         cookie: cookies,
-        Referer: "https://blur.io/",
-        "Referrer-Policy": "strict-origin-when-cross-origin",
       },
       body: JSON.stringify(body),
       method: "POST",
@@ -158,110 +118,67 @@ async function placeBid(cookies, contractAddress) {
   );
 }
 
-function parseCookies(cookieHeader) {
-  const list = {};
-  if (!cookieHeader) return list;
-
-  cookieHeader.split(`;`).forEach(function (cookie) {
-    let [name, ...rest] = cookie.split(`=`);
-    name = name?.trim();
-    if (!name) return;
-    const value = rest.join(`=`).trim();
-    if (!value) return;
-    list[name] = decodeURIComponent(value);
-  });
-
-  return list;
-}
-
 async function blurBid(privateKey) {
   var web3 = new Web3(
     "wss://eth-mainnet.g.alchemy.com/v2/ujAP2FT6E7-oJWdWuSRaRNma4iXcdNhy"
   );
   const account = web3.eth.accounts.privateKeyToAccount(privateKey);
-  console.log(account.address);
-  const challengeResponse = await getChallenge(account.address);
-  const cookies = challengeResponse.headers.get("set-cookie");
-  console.log("cookies:");
-  console.log(cookies);
-  const parsedCookies = parseCookies(cookies);
-  const challenge = await challengeResponse.json();
-  console.log("/////// CHALLENGE ///////");
-  console.log(challenge);
-  const signature = await web3.eth.accounts.sign(
-    challenge.message,
-    account.privateKey
-  );
-  console.log("/////// SIGNATURE ///////");
-  console.log(signature);
-  const loginResponse = await login(
-    account.address,
-    challenge,
-    signature.signature,
-    cookies
-  );
-
-  const loginResponseJson = await loginResponse.json();
-  console.log(loginResponse.status);
-  const authCookies = loginResponse.headers.get("set-cookie");
-  console.log(authCookies);
-  console.log(loginResponseJson);
-  const accessToken = loginResponseJson.accessToken;
-  console.log("/////// ACCESS TOKEN ///////");
-  console.log(accessToken);
-
-  const refreshedCookiesResponse = await refreshCookies(cookies, accessToken);
-  const refreshedCookiesJson = await refreshedCookiesResponse.json();
-  const refreshedCookies = refreshedCookiesResponse.headers.get("set-cookie");
-  console.log("/////// REFRESH COOKIES ///////");
-  console.log(refreshedCookies);
-  console.log("refreshedCookiesJson:");
-  console.log(refreshedCookiesJson);
-
-  const updatedCookies = `authToken=${accessToken}; ${cookies}`;
-
-  const placeBidResponse = await placeBid(
-    updatedCookies,
-    "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d", // Bored Apes
-    accessToken
-  );
-  console.log("/////// PLACE BID ///////");
-  console.log(`${placeBidResponse.status} ${placeBidResponse.statusText}`);
-  const placeBidResponseJson = await placeBidResponse.json();
-  console.log("placeBidResponseJson:");
-  console.log(placeBidResponseJson);
-  const marketplaceData = placeBidResponseJson.signatures[0].marketplaceData;
-  console.log("marketplaceData:");
-  console.log(marketplaceData);
-  const signData = placeBidResponseJson.signatures[0].signData;
-  console.log("signData:");
-  console.log(signData);
-  const types = signData.types;
-  const domain = signData.domain;
-  const value = signData.value;
-
-  console.log("/////// SIGN BID ///////");
-
   const provider = new ethers.providers.JsonRpcProvider(
     "wss://eth-mainnet.g.alchemy.com/v2/ujAP2FT6E7-oJWdWuSRaRNma4iXcdNhy"
   );
-
+  // const account = web3.eth.accounts.privateKeyToAccount(privateKey);
   var wallet = new ethers.Wallet(privateKey, provider);
-  const typedSignature = await wallet._signTypedData(domain, types, value);
 
-  console.log("typedSignature");
-  console.log(typedSignature);
+  console.log("/////// ADDRESS ///////");
+  console.log(wallet.address);
 
-  console.log("/////// SUBMIT BID ///////");
-  const submitBidResponse = await submitBid(
-    updatedCookies,
-    typedSignature,
-    marketplaceData
+  console.log("/////// CHALLENGE ///////");
+  const challengeResponse = await getChallenge(account.address);
+  console.log(`${challengeResponse.status} ${challengeResponse.statusText}`);
+  const cookies = challengeResponse.headers.get("set-cookie");
+  const challenge = await challengeResponse.json();
+  console.log("/////// SIGN FOR LOGIN ///////");
+  const signature = await wallet.signMessage(challenge.message);
+  console.log(signature);
+  console.log("/////// LOGIN TO GET ACCESS TOKEN ///////");
+  const loginResponse = await login(
+    account.address,
+    challenge,
+    signature,
+    cookies
   );
-  console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`);
-  const submitBidResponseJson = await submitBidResponse.json();
-  console.log("submitBidResponseJson:");
-  console.log(submitBidResponseJson);
+  console.log(`${loginResponse.status} ${loginResponse.statusText}`);
+  const loginResponseJson = await loginResponse.json();
+  const accessToken = loginResponseJson.accessToken;
+  const authCookies = `authToken=${accessToken}; ${cookies}`;
+
+  const nftContracts = ["0x23581767a106ae21c074b2276d25e5c3e136a68b"];
+
+  nftContracts.forEach(async (contract) => {
+    console.log("/////// PLACE BID ///////");
+    const placeBidResponse = await placeBid(authCookies, contract, accessToken);
+    console.log(`${placeBidResponse.status} ${placeBidResponse.statusText}`);
+    const placeBidResponseJson = await placeBidResponse.json();
+    const marketplaceData = placeBidResponseJson.signatures[0].marketplaceData;
+    const signData = placeBidResponseJson.signatures[0].signData;
+    const types = signData.types;
+    const domain = signData.domain;
+    const value = signData.value;
+
+    console.log("/////// SIGN FOR BID ///////");
+    const typedSignature = await wallet._signTypedData(domain, types, value);
+    console.log(typedSignature);
+
+    console.log("/////// SUBMIT BID ///////");
+    const submitBidResponse = await submitBid(
+      authCookies,
+      typedSignature,
+      marketplaceData
+    );
+    console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`);
+    const submitBidResponseJson = await submitBidResponse.json();
+    console.log(submitBidResponseJson);
+  });
 }
 
 async function readFile() {
