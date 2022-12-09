@@ -1,4 +1,3 @@
-import Web3 from "web3";
 import fetch from "node-fetch";
 import fs from "fs";
 import readline from "readline";
