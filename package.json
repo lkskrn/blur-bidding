@@ -12,6 +12,8 @@
   "author": "https://t.me/cryptolbs",
   "license": "ISC",
   "dependencies": {
+    "child": "^0.0.3",
+    "child_process": "^1.0.2",
     "console-stamp": "^3.1.0",
     "ethers": "^5.7.2",
     "fs": "^0.0.1-security",
