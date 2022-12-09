@@ -152,10 +152,18 @@ async function blurBid(privateKey) {
   const accessToken = loginResponseJson.accessToken;
   const authCookies = `authToken=${accessToken}; ${cookies}`;
 
-  const nftContracts = ["0x23581767a106ae21c074b2276d25e5c3e136a68b"];
+  const nftContracts = [
+    "0xd4e4078ca3495de5b1d4db434bebc5a986197782",
+    "0x23581767a106ae21c074b2276d25e5c3e136a68b",
+    "0x49cf6f5d44e70224e2e23fdcdd2c053f30ada28b",
+    "0xed5af388653567af2f388e6224dc7c4b3241c544",
+    "0xbd3531da5cf5857e7cfaa92426877b022e612cf8",
+    "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d",
+    "0x60e4d786628fea6478f785a6d7e704777c86a7c6",
+  ];
 
-  nftContracts.forEach(async (contract) => {
-    console.log("/////// PLACE BID ///////");
+  for await (const contract of nftContracts) {
+    console.log(`/////// PLACE BID ${contract} ///////`);
     const placeBidResponse = await placeBid(authCookies, contract, accessToken);
     console.log(`${placeBidResponse.status} ${placeBidResponse.statusText}`);
     const placeBidResponseJson = await placeBidResponse.json();
@@ -178,7 +186,7 @@ async function blurBid(privateKey) {
     console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`);
     const submitBidResponseJson = await submitBidResponse.json();
     console.log(submitBidResponseJson);
-  });
+  }
 }
 
 async function readFile() {
