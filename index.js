@@ -98,11 +98,6 @@ async function placeBid(cookies, contractAddress) {
     expirationTime: new Date(Date.now() + 1000000).toISOString(),
     contractAddress: contractAddress,
   };
-  // console.log("placeBid.body:");
-  // console.log(body);
-
-  // console.log("placeBid.cookies:");
-  // console.log(cookies);
 
   return await fetch(
     "https://core-api.prod.blur.io/v1/collection-bids/format",
@@ -119,21 +114,14 @@ async function placeBid(cookies, contractAddress) {
 }
 
 async function blurBid(privateKey) {
-  var web3 = new Web3(
-    "wss://eth-mainnet.g.alchemy.com/v2/ujAP2FT6E7-oJWdWuSRaRNma4iXcdNhy"
-  );
-  const account = web3.eth.accounts.privateKeyToAccount(privateKey);
   const provider = new ethers.providers.JsonRpcProvider(
     "wss://eth-mainnet.g.alchemy.com/v2/ujAP2FT6E7-oJWdWuSRaRNma4iXcdNhy"
   );
-  // const account = web3.eth.accounts.privateKeyToAccount(privateKey);
   var wallet = new ethers.Wallet(privateKey, provider);
-
   console.log("/////// ADDRESS ///////");
   console.log(wallet.address);
-
   console.log("/////// CHALLENGE ///////");
-  const challengeResponse = await getChallenge(account.address);
+  const challengeResponse = await getChallenge(wallet.address);
   console.log(`${challengeResponse.status} ${challengeResponse.statusText}`);
   const cookies = challengeResponse.headers.get("set-cookie");
   const challenge = await challengeResponse.json();
@@ -142,7 +130,7 @@ async function blurBid(privateKey) {
   console.log(signature);
   console.log("/////// LOGIN TO GET ACCESS TOKEN ///////");
   const loginResponse = await login(
-    account.address,
+    wallet.address,
     challenge,
     signature,
     cookies
@@ -160,8 +148,15 @@ async function blurBid(privateKey) {
     "0xbd3531da5cf5857e7cfaa92426877b022e612cf8",
     "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d",
     "0x60e4d786628fea6478f785a6d7e704777c86a7c6",
+    "0x34d85c9cdeb23fa97cb08333b511ac86e1c4e258",
   ];
-
+  const shuffleArray = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  };
+  shuffleArray(nftContracts);
   for await (const contract of nftContracts) {
     console.log(`/////// PLACE BID ${contract} ///////`);
     const placeBidResponse = await placeBid(authCookies, contract, accessToken);
