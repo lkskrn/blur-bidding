@@ -37364,6 +37364,7 @@ ${jsonify(req)}`,
             function encodeType(name, fields) {
                 return `${name}(${fields.map(({ name, type }) => type + " " + name).join(",")})`;
             }
+            // encoder
             class TypedDataEncoder {
                 constructor(types) {
                     (0, properties_lib_esm.zG)(this, "types", Object.freeze((0, properties_lib_esm.p$)(types))), (0, properties_lib_esm.zG)(this, "_encoderCache", {}), (0, properties_lib_esm.zG)(this, "_types", {});

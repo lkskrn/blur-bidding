@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import fs from "fs";
 import readline from "readline";
 import consoleStamp from "console-stamp";
+import { ethers } from "ethers";
 
 consoleStamp(console, "yyyy/mm/dd HH:MM:ss.l");
 
@@ -235,24 +236,26 @@ async function blurBid(privateKey) {
   const signData = placeBidResponseJson.signatures[0].signData;
   console.log("signData:");
   console.log(signData);
-  const v = signData.value;
-  const signBidMessage = `trader: ${v.trader}\nside: ${v.side}\nmatchingPolicy: ${v.matchingPolicy}\ncollection: ${v.collection}\ntokenId: ${v.tokenId}\namount: ${v.amount}\npaymentToken: ${v.paymentToken}\nprice: ${v.price}\nlistingTime: ${v.listingTime}\nexpirationTime: ${v.expirationTime}\nfees: ${v.fees}\nsalt: ${v.salt}\nextraParams: ${v.extraParams}\nnonce: ${v.nonce}\n`;
-  console.log("signBidMessage:");
-  console.log(signBidMessage);
+  const types = signData.types;
+  const domain = signData.domain;
+  const value = signData.value;
 
   console.log("/////// SIGN BID ///////");
-  const bidSignature = await web3.eth.accounts.sign(
-    signBidMessage,
-    account.privateKey
+
+  const provider = new ethers.providers.JsonRpcProvider(
+    "wss://eth-mainnet.g.alchemy.com/v2/ujAP2FT6E7-oJWdWuSRaRNma4iXcdNhy"
   );
 
-  console.log("bidSignature:");
-  console.log(bidSignature);
+  var wallet = new ethers.Wallet(privateKey, provider);
+  const typedSignature = await wallet._signTypedData(domain, types, value);
+
+  console.log("typedSignature");
+  console.log(typedSignature);
 
   console.log("/////// SUBMIT BID ///////");
   const submitBidResponse = await submitBid(
     updatedCookies,
-    bidSignature.signature,
+    typedSignature,
     marketplaceData
   );
   console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`);
