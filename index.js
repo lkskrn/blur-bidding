@@ -89,13 +89,14 @@ async function submitBid(cookies, signature, marketplaceData, proxyAgent) {
 }
 
 async function placeBid(cookies, contractAddress, proxyAgent) {
+  var expirationTime = new Date(new Date().setDate(new Date().getDate() + 30)); // now + 30 days
   const body = {
     price: {
       unit: "BETH",
       amount: "0.01",
     },
     quantity: 1,
-    expirationTime: new Date(Date.now() + 1000000).toISOString(),
+    expirationTime: expirationTime.toISOString(),
     contractAddress: contractAddress,
   };
 
@@ -205,7 +206,7 @@ async function readFile(proxy) {
   for await (const line of rl) {
     await blurBid(line, proxyAgent);
     console.log("wait for the next run...");
-    await sleep(10000);
+    await sleep(120000); // 2 minutes
   }
 }
 
