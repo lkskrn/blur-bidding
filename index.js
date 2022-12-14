@@ -88,13 +88,14 @@ async function submitBid(cookies, signature, marketplaceData) {
 }
 
 async function placeBid(cookies, contractAddress) {
+  var expirationTime = new Date(new Date().setDate(new Date().getDate() + 30)); // now + 30 days
   const body = {
     price: {
       unit: "BETH",
       amount: "0.01",
     },
     quantity: 1,
-    expirationTime: new Date(Date.now() + 1000000).toISOString(),
+    expirationTime: expirationTime.toISOString(),
     contractAddress: contractAddress,
   };
 
