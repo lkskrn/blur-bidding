@@ -113,6 +113,18 @@ async function placeBid(cookies, contractAddress) {
   );
 }
 
+async function bidRewards(cookies) {
+  return await fetch("https://core-api.prod.blur.io/v1/user/rewards/bid", {
+    headers: {
+      ...defaultHeaders,
+      cookie: cookies,
+    },
+    body: null,
+    method: "POST",
+    mode: "cors",
+  });
+}
+
 async function blurBid(privateKey) {
   const provider = new ethers.providers.JsonRpcProvider(
     "wss://eth-mainnet.g.alchemy.com/v2/ujAP2FT6E7-oJWdWuSRaRNma4iXcdNhy"
@@ -181,6 +193,15 @@ async function blurBid(privateKey) {
     console.log(`${submitBidResponse.status} ${submitBidResponse.statusText}`);
     const submitBidResponseJson = await submitBidResponse.json();
     console.log(submitBidResponseJson);
+
+    //console.log(">>> GET BID REWARDS <<<");
+    //const bitRewardsResponse = await bidRewards(authCookies);
+    //console.log(
+    //  `${bitRewardsResponse.status} ${bitRewardsResponse.statusText}`
+    //);
+    //const bitRewardsResponseJson = await bitRewardsResponse.json();
+    //console.log(bitRewardsResponseJson);
+
     await new Promise((r) => setTimeout(r, 1000));
   }
 }
